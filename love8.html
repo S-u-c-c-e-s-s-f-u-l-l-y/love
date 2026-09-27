@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>生日爱心贺卡</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#ffeef4;
+    color:#ff7788;
+    font-family:"Consolas","Microsoft YaHei",monospace;
+    text-align:center;
+    overflow:hidden;
+}
+
+#tip{
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    top:12px;
+    color:#d6336c;
+    font-size:13px;
+    z-index:6;
+}
+
+#stage{
+    position:fixed;
+    left:50%;
+    top:60px;
+    transform:translateX(-50%);
+    width:720px;
+    height:620px;
+    z-index:1;
+}
+
+#canvas{
+    display:block;
+    margin:0 auto;
+}
+
+#asciiHeart{
+    position:absolute;
+    left:50%;
+    top:44%;
+    transform:translate(-50%,-50%);
+    white-space:pre;
+    font-size:8px;
+    line-height:1.08;
+    color:#ff3355;
+    pointer-events:none;
+    z-index:3;
+}
+
+#textBottom{
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:40px;
+    font-size:24px;
+    color:#c2185b;
+    letter-spacing:3px;
+    z-index:4;
+}
+
+#floatText{
+    position:absolute;
+    padding:10px 14px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:bold;
+    color:#fff;
+    pointer-events:none;
+    white-space:nowrap;
+    box-shadow:0 0 14px rgba(255,105,135,0.45);
+    opacity:0;
+    transition:opacity 0.22s;
+    z-index:7;
+}
+
+.balloon{
+    position:absolute;
+    width:26px;
+    height:32px;
+    border-radius:50%;
+    z-index:0;
+    opacity:0.82;
+}
+
+.balloon::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:100%;
+    width:1px;
+    height:45px;
+    background:rgba(255,105,135,0.35);
+}
+
+.confetti{
+    position:absolute;
+    width:7px;
+    height:5px;
+    border-radius:2px;
+    z-index:0;
+}
+</style>
+</head>
+<body>
+
+<div id="tip">鼠标移到彩色方块上查看生日祝福 ✨</div>
+
+<div id="stage">
+    <canvas id="canvas" width="720" height="620"></canvas>
+    <div id="asciiHeart"></div>
+    <div id="floatText"></div>
+</div>
+
+<div id="textBottom">
+    生日快乐<br><br>永远开心快乐。
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const floatText = document.getElementById("floatText");
+const stage = document.getElementById("stage");
+
+const cx = 360;
+const cy = 220;
+const scale = 13;
+const STEP = 5;
+let angle = 0;
+const blocks = [];
+
+const birthdayTips = [
+    "生日快乐",
+    "永远开心",
+    "学业有成",
+    "万事顺意",
+    "心想事成",
+    "好运连连",
+    "天天快乐",
+    "健康成长",
+    "前程似锦",
+    "被爱包围",
+    "暴富暴美",
+    "平安喜乐",
+    "梦想成真",
+    "幸福常伴",
+    "笑容常在"
+];
+
+const colorList = [
+    "#ff6b9d","#ff85a2","#ffa6c1","#ffc2d4",
+    "#8ed1ff","#a7e0ff","#c7f0ff","#b5f5b5",
+    "#d9f5a7","#fff59a","#ffd98a","#ffb36b",
+    "#d6a7ff","#f7a7ff","#ff9aa2"
+];
+
+function heartCoord(t){
+    const x = 16 * Math.pow(Math.sin(t),3);
+    const y = 13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+    return {x:x, y:-y};
+}
+
+function drawPointAnimate(){
+    if(angle >= 360){
+        setTimeout(autoShowTip, 900);
+        return;
+    }
+
+    const rad = angle * Math.PI / 180;
+    const p = heartCoord(rad);
+    const px = cx + p.x * scale;
+    const py = cy + p.y * scale;
+    const clr = colorList[Math.floor(Math.random()*colorList.length)];
+    const word = birthdayTips[Math.floor(Math.random()*birthdayTips.length)];
+
+    ctx.fillStyle = clr;
+    ctx.fillRect(px-13, py-13, 26, 26);
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px-13, py-13, 26, 26);
+
+    blocks.push({x:px, y:py, color:clr, tip:word});
+    angle += STEP;
+    setTimeout(drawPointAnimate, 42);
+}
+
+function initAsciiHeart(){
+    let str = "";
+    for(let y = 1.4; y > -1.4; y -= 0.08){
+        for(let x = -1.3; x < 1.3; x += 0.04){
+            const a = x*x + y*y - 1;
+            if(a*a*a - x*x*y*y*y <= 0){
+                str += "*";
+            }else{
+                str += " ";
+            }
+        }
+        str += "\n";
+    }
+    document.getElementById("asciiHeart").innerText = str;
+}
+
+function autoShowTip(){
+    if(blocks.length === 0) return;
+    const blk = blocks[Math.floor(Math.random()*blocks.length)];
+    floatText.style.opacity = 1;
+    floatText.style.left = (blk.x + 16) + "px";
+    floatText.style.top = (blk.y - 32) + "px";
+    floatText.style.background = blk.color;
+    floatText.innerText = blk.tip;
+    setTimeout(()=>{
+        floatText.style.opacity = 0;
+    }, 1000);
+    setTimeout(autoShowTip, 1500);
+}
+
+canvas.addEventListener("mousemove", e=>{
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    let near = null;
+    let minD = 62;
+
+    for(let b of blocks){
+        const dist = Math.hypot(mx - b.x, my - b.y);
+        if(dist < minD){
+            minD = dist;
+            near = b;
+        }
+    }
+
+    if(near){
+        floatText.style.opacity = 1;
+        floatText.style.left = (near.x + 16) + "px";
+        floatText.style.top = (near.y - 32) + "px";
+        floatText.style.background = near.color;
+        floatText.innerText = near.tip;
+    }else{
+        floatText.style.opacity = 0;
+    }
+});
+
+function spawnBalloon(){
+    const bc = ["#ff7b9c","#ffb3d1","#ffd7ec","#ff9ec7","#ff6fa5"];
+    let b = document.createElement("div");
+    b.classList.add("balloon");
+    b.style.left = (Math.random()*94) + "%";
+    b.style.bottom = "-60px";
+    b.style.background = bc[Math.floor(Math.random()*bc.length)];
+    document.body.appendChild(b);
+
+    let posY = -60;
+    function fly(){
+        posY -= 0.45;
+        b.style.bottom = posY + "px";
+        if(posY < -900){
+            b.remove();
+        }else{
+            requestAnimationFrame(fly);
+        }
+    }
+    fly();
+}
+
+function spawnConfetti(){
+    const cc = ["#ff7b9c","#ffb3d1","#ffd700","#ff9ec7","#ffffff"];
+    let c = document.createElement("div");
+    c.classList.add("confetti");
+    c.style.left = (Math.random()*98) + "%";
+    c.style.top = "-12px";
+    c.style.background = cc[Math.floor(Math.random()*cc.length)];
+    document.body.appendChild(c);
+
+    let py = -12;
+    let r = 0;
+    function fall(){
+        py += 1.35;
+        r += 2.2;
+        c.style.top = py + "px";
+        c.style.transform = "rotate(" + r + "deg)";
+        if(py > 1100){
+            c.remove();
+        }else{
+            requestAnimationFrame(fall);
+        }
+    }
+    fall();
+}
+
+setInterval(spawnBalloon, 2200);
+setInterval(spawnConfetti, 160);
+
+initAsciiHeart();
+drawPointAnimate();
+</script>
+
+</body>
+</html>
