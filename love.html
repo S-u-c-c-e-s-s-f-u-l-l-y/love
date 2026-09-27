@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>双爱心表白</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background-color:#000000;
+    color:#ff7788;
+    font-family:"Consolas", monospace;
+    text-align:center;
+    padding-top:30px;
+}
+#canvas{
+    display:inline-block;
+}
+#asciiHeart{
+    margin-top:-320px;
+    position:relative;
+    white-space:pre;
+    font-size:9px;
+    color:#ff4466;
+}
+#textBottom{
+    margin-top:80px;
+    font-size:22px;
+    color:#ffb0b8;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas" width="720" height="620"></canvas>
+<div id="asciiHeart"></div>
+<div id="textBottom">
+<br/>我<br/><br/>永远开心快乐。
+</div>
+
+<script>
+// ==========第一部分：生成外围方块爱心（复刻win32弹窗离散点爱心）============
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+//爱心参数方程
+function heartCoord(t){
+    let x = 16 * Math.pow(Math.sin(t),3);
+    let y = 13*Math.cos(t) -5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+    return {x:x, y:-y};
+}
+//颜色数组（和C版本保持一致）
+const colorList = [
+    "#ffc0cb",
+    "#add8e6",
+    "#90ee90",
+    "#fffacd",
+    "#ff69b4",
+    "#ffffe0",
+    "#ffe0e6",
+    "#e0ffff"
+];
+//画布偏移，爱心放到画布中间
+const cx = 360;
+const cy = 260;
+const scale =14;
+let angle=0;
+const STEP=5;
+
+//动画逐个绘制彩色方块，模拟弹窗慢慢弹出
+function drawPointAnimate(){
+    if(angle >=360){
+        return;
+    }
+    let rad = angle * Math.PI /180.0;
+    let p = heartCoord(rad);
+    let px = cx + p.x * scale;
+    let py = cy + p.y * scale;
+    let idx = Math.floor(Math.random()*8);
+    ctx.fillStyle = colorList[idx];
+    ctx.fillRect(px-14,py-14,28,28);
+    ctx.strokeStyle="#222222";
+    ctx.strokeRect(px-14,py-14,28,28);
+
+    angle += STEP;
+    setTimeout(drawPointAnimate,35);
+}
+drawPointAnimate();
+
+//========第二部分：中间ASCII星号爱心（笛卡尔隐函数爱心）============
+let asciiStr="";
+//复刻原来C语言隐函数爱心
+for(let y=1.5; y> -1.5; y -=0.1){
+    for(let x=-1.5;x<1.5;x +=0.05){
+        let a = x*x+y*y -1;
+        if( a*a*a - x*x*y*y*y <=0 ){
+            asciiStr += "*";
+        }else{
+            asciiStr += " ";
+        }
+    }
+    asciiStr += "\n";
+}
+document.getElementById("asciiHeart").innerText = asciiStr;
+
+</script>
+</body>
+</html>
+📖布局说明
